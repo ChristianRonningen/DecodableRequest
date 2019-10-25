@@ -38,6 +38,9 @@ final class DecodableRequestTests: XCTestCase {
                 return .notFound
             }
         }
+        server!["/statuscodeerror"] = { req -> HttpResponse in
+            return .notFound
+        }
         
         try? server!.start()
         return try! server!.port()
@@ -123,6 +126,29 @@ final class DecodableRequestTests: XCTestCase {
         stopServer()
     }
     
+    func testStatuscodeError() {
+        let port = startServer()
+        
+        let group = DispatchGroup()
+        
+        let url = URL(string: "http://localhost:\(port)/statuscodeerror")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        group.enter()
+        DispatchQueue.global(qos: .background).async {
+            _ = URLSession.shared.jsonTask(with: request, resultType: [Post].self, keypath: "uss") { (post, error) in
+                XCTAssertEqual(error, URLSessionApiError.statusCodeError(404, Array(200..<300)))
+                group.leave()
+            }
+        }
+        
+        _ = group.wait(timeout: .distantFuture)
+        
+        stopServer()
+    }
+    
     func testNestedJson() {
         let port = startServer()
         
@@ -199,5 +225,11 @@ final class DecodableRequestTests: XCTestCase {
     
     static var allTests = [
         ("testJSON", testJSON),
+        ("testJSONError", testJSONError),
+        ("testNestedJsonError", testNestedJsonError),
+        ("testNestedJson", testNestedJson),
+        ("testStatuscodeError", testStatuscodeError),
+        ("testKeypathError", testKeypathError),
+        ("testPostPost", testPostPost)
     ]
 }

@@ -7,6 +7,7 @@ public enum URLSessionApiError: LocalizedError {
     case dataError
     case keypathError(String)
     case responsError(Error)
+    case statusCodeError(Int, [Int])
     
     public var errorDescription: String? {
         switch self {
@@ -20,6 +21,8 @@ public enum URLSessionApiError: LocalizedError {
             return "Keypath \(k) is missing or not valid"
         case .responsError(let e):
             return e.localizedDescription
+        case .statusCodeError(let sc, let asc):
+            return "Statuscode of \(sc) didnt match accepted codes \(asc)"
         }
     }
 }
@@ -35,6 +38,8 @@ extension URLSessionApiError: Equatable {
             return true
         case (.keypathError(let a), .keypathError(let b)):
             return a == b
+        case (.statusCodeError(let scA, _), .statusCodeError(let scB, _)):
+            return scA == scB
         default:
             return false
         }
@@ -48,13 +53,22 @@ public extension URLSession {
         return jsonTask(with: request, resultType: resultType, keypath: keypath, completion: completion)
     }
     
-    func jsonTask<T>(with request: URLRequest, resultType: T.Type, keypath: String? = nil, completion: @escaping (T?, URLSessionApiError?) -> Void) -> URLSessionDataTask where T: Decodable {
+    func jsonTask<T>(with request: URLRequest, resultType: T.Type, acceptedStatusCodes: [Int]? = Array(200..<300), keypath: String? = nil, completion: @escaping (T?, URLSessionApiError?) -> Void) -> URLSessionDataTask where T: Decodable {
         return dataTask(with: request) { (data, response, error) in
             if let error = error {
                 completion(nil, .responsError(error))
                 return
             }
-            
+
+            if let httpResponse = response as? HTTPURLResponse {
+                if let statusCodes = acceptedStatusCodes {
+                    if !statusCodes.contains(httpResponse.statusCode) {
+                        completion(nil, .statusCodeError(httpResponse.statusCode, statusCodes))
+                        return
+                    }
+                }
+            }
+
             guard let data = data else {
                 completion(nil, .dataError)
                 return
