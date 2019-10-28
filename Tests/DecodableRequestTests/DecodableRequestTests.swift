@@ -55,31 +55,29 @@ final class DecodableRequestTests: XCTestCase {
         
         let port = startServer()
         
-        let group = DispatchGroup()
-        
         let url = URL(string: "http://localhost:\(port)/posts")!
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         
-        group.enter()
-        DispatchQueue.global(qos: .background).async {
-            _ = URLSession.shared.jsonTask(with: request, resultType: [Post].self, keypath: "users") { (post, error) in
-                XCTAssertNotNil(post, String(describing: error))
-                print(String(describing: post))
-                group.leave()
-            }
+        let expect = expectation(description: "Complete call")
+        _ = URLSession.shared.jsonTask(with: request, resultType: [Post].self, keypath: "users") { (post, error) in
+            XCTAssert(Thread.isMainThread, "Not on main thread")
+            XCTAssertNotNil(post, String(describing: error))
+            print(String(describing: post))
+            
+            expect.fulfill()
         }
         
-        _ = group.wait(timeout: .distantFuture)
+        waitForExpectations(timeout: 10) { (err) in
+            XCTAssertNil(err)
+        }
         
         stopServer()
     }
     
     func testPostPost() {
         let port = startServer()
-        
-        let group = DispatchGroup()
         
         let url = URL(string: "http://localhost:\(port)/posts")!
         var request = URLRequest(url: url)
@@ -88,17 +86,18 @@ final class DecodableRequestTests: XCTestCase {
         let post = Post(userId: 89)
         request.httpBody = try! JSONEncoder().encode(post)
         
-        group.enter()
-        DispatchQueue.global(qos: .background).async {
-            _ = URLSession.shared.jsonTask(with: request, resultType: Post.self) { (post, error) in
-                XCTAssertNotNil(post, String(describing: error))
-                XCTAssertTrue(post!.userId == 89, String(describing: error))
-                print(String(describing: post))
-                group.leave()
-            }
+        let expect = expectation(description: "Complete call")
+        _ = URLSession.shared.jsonTask(with: request, resultType: Post.self) { (post, error) in
+            XCTAssert(Thread.isMainThread, "Not on main thread")
+            XCTAssertNotNil(post, String(describing: error))
+            XCTAssertTrue(post!.userId == 89, String(describing: error))
+            print(String(describing: post))
+            expect.fulfill()
         }
         
-        _ = group.wait(timeout: .distantFuture)
+        waitForExpectations(timeout: 10) { (err) in
+            XCTAssertNil(err)
+        }
         
         stopServer()
     }
@@ -106,22 +105,22 @@ final class DecodableRequestTests: XCTestCase {
     func testKeypathError() {
         let port = startServer()
         
-        let group = DispatchGroup()
-        
         let url = URL(string: "http://localhost:\(port)/posts")!
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         
-        group.enter()
-        DispatchQueue.global(qos: .background).async {
-            _ = URLSession.shared.jsonTask(with: request, resultType: [Post].self, keypath: "uss") { (post, error) in
-                XCTAssertEqual(error, URLSessionApiError.keypathError("uss"))
-                group.leave()
-            }
+        let expect = expectation(description: "Complete call")
+        _ = URLSession.shared.jsonTask(with: request, resultType: [Post].self, keypath: "uss") { (post, error) in
+            XCTAssert(Thread.isMainThread, "Not on main thread")
+            XCTAssertEqual(error, URLSessionApiError.keypathError("uss"))
+            expect.fulfill()
         }
         
-        _ = group.wait(timeout: .distantFuture)
+        
+        waitForExpectations(timeout: 10) { (err) in
+            XCTAssertNil(err)
+        }
         
         stopServer()
     }
@@ -129,22 +128,21 @@ final class DecodableRequestTests: XCTestCase {
     func testStatuscodeError() {
         let port = startServer()
         
-        let group = DispatchGroup()
-        
         let url = URL(string: "http://localhost:\(port)/statuscodeerror")!
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         
-        group.enter()
-        DispatchQueue.global(qos: .background).async {
-            _ = URLSession.shared.jsonTask(with: request, resultType: [Post].self, keypath: "uss") { (post, error) in
-                XCTAssertEqual(error, URLSessionApiError.statusCodeError(404, Array(200..<300)))
-                group.leave()
-            }
+        let expect = expectation(description: "Complete call")
+        _ = URLSession.shared.jsonTask(with: request, resultType: [Post].self, keypath: "uss") { (post, error) in
+            XCTAssert(Thread.isMainThread, "Not on main thread")
+            XCTAssertEqual(error, URLSessionApiError.statusCodeError(404, Array(200..<300)))
+            expect.fulfill()
         }
         
-        _ = group.wait(timeout: .distantFuture)
+        waitForExpectations(timeout: 10) { (err) in
+            XCTAssertNil(err)
+        }
         
         stopServer()
     }
@@ -152,23 +150,22 @@ final class DecodableRequestTests: XCTestCase {
     func testNestedJson() {
         let port = startServer()
         
-        let group = DispatchGroup()
-        
         let url = URL(string: "http://localhost:\(port)/posts")!
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         
-        group.enter()
-        DispatchQueue.global(qos: .background).async {
-            _ = URLSession.shared.jsonTask(with: request, resultType: Name.self, keypath: "user.name") { (name, error) in
-                XCTAssertNotNil(name, String(describing: error))
-                print(String(describing: name))
-                group.leave()
-            }
+        let expect = expectation(description: "Complete call")
+        _ = URLSession.shared.jsonTask(with: request, resultType: Name.self, keypath: "user.name") { (name, error) in
+            XCTAssert(Thread.isMainThread, "Not on main thread")
+            XCTAssertNotNil(name, String(describing: error))
+            print(String(describing: name))
+            expect.fulfill()
         }
         
-        _ = group.wait(timeout: .distantFuture)
+        waitForExpectations(timeout: 10) { (err) in
+            XCTAssertNil(err)
+        }
         
         stopServer()
     }
@@ -176,22 +173,22 @@ final class DecodableRequestTests: XCTestCase {
     func testNestedJsonError() {
         let port = startServer()
         
-        let group = DispatchGroup()
-        
         let url = URL(string: "http://localhost:\(port)/posts")!
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         
-        group.enter()
-        DispatchQueue.global(qos: .background).async {
-            _ = URLSession.shared.jsonTask(with: request, resultType: Name.self, keypath: "user.name.ad") { (name, error) in
-                XCTAssertEqual(error, URLSessionApiError.keypathError("user.name.ad"))
-                group.leave()
-            }
+       let expect = expectation(description: "Complete call")
+        
+        _ = URLSession.shared.jsonTask(with: request, resultType: Name.self, keypath: "user.name.ad") { (name, error) in
+            XCTAssert(Thread.isMainThread, "Not on main thread")
+            XCTAssertEqual(error, URLSessionApiError.keypathError("user.name.ad"))
+            expect.fulfill()
         }
         
-        _ = group.wait(timeout: .distantFuture)
+        waitForExpectations(timeout: 10) { (err) in
+            XCTAssertNil(err)
+        }
         
         stopServer()
     }
@@ -203,22 +200,25 @@ final class DecodableRequestTests: XCTestCase {
             return .ok(HttpResponseBody.html("this is not json"))
         }
         
-        let group = DispatchGroup()
+       
         
         let url = URL(string: "http://localhost:\(port)/badjson")!
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         
-        group.enter()
-        DispatchQueue.global(qos: .background).async {
-            _ = URLSession.shared.jsonTask(with: request, resultType: [Post].self) { (post, error) in
-                XCTAssertEqual(error, URLSessionApiError.jsonError(nil))
-                group.leave()
-            }
-        }
+        let expect = expectation(description: "Complete call")
         
-        _ = group.wait(timeout: .distantFuture)
+        _ = URLSession.shared.jsonTask(with: request, resultType: [Post].self) { (post, error) in
+            XCTAssert(Thread.isMainThread, "Not on main thread")
+            XCTAssertEqual(error, URLSessionApiError.jsonError(nil))
+            expect.fulfill()
+        }
+    
+        
+        waitForExpectations(timeout: 10) { (err) in
+            XCTAssertNil(err)
+        }
         
         stopServer()
     }

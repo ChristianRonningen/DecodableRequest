@@ -56,21 +56,21 @@ public extension URLSession {
     func jsonTask<T>(with request: URLRequest, resultType: T.Type, acceptedStatusCodes: [Int]? = Array(200..<300), keypath: String? = nil, completion: @escaping (T?, URLSessionApiError?) -> Void) -> URLSessionDataTask where T: Decodable {
         return dataTask(with: request) { (data, response, error) in
             if let error = error {
-                completion(nil, .responsError(error))
+                DispatchQueue.main.async { completion(nil, .responsError(error)) }
                 return
             }
 
             if let httpResponse = response as? HTTPURLResponse {
                 if let statusCodes = acceptedStatusCodes {
                     if !statusCodes.contains(httpResponse.statusCode) {
-                        completion(nil, .statusCodeError(httpResponse.statusCode, statusCodes))
+                        DispatchQueue.main.async { completion(nil, .statusCodeError(httpResponse.statusCode, statusCodes)) }
                         return
                     }
                 }
             }
 
             guard let data = data else {
-                completion(nil, .dataError)
+                DispatchQueue.main.async { completion(nil, .dataError) }
                 return
             }
             
@@ -78,7 +78,7 @@ public extension URLSession {
                 let decoder = JSONDecoder()
                 guard let keypath = keypath else {
                     let value = try decoder.decode(T.self, from: data)
-                    completion(value, nil)
+                    DispatchQueue.main.async { completion(value, nil) }
                     return
                 }
                 
@@ -92,16 +92,16 @@ public extension URLSession {
                     keypathJson = (keypathJson as? [AnyHashable: Any])?[key]
                 }
                 guard keypathJson != nil else {
-                    completion(nil, .keypathError(keypath))
+                    DispatchQueue.main.async { completion(nil, .keypathError(keypath)) }
                     return
                 }
                 
                 let keypathData = try JSONSerialization.data(withJSONObject: keypathJson as Any, options: .fragmentsAllowed)
                 
                 let value = try decoder.decode(T.self, from: keypathData)
-                completion(value, nil)
+                DispatchQueue.main.async { completion(value, nil) }
             } catch let e {
-                completion(nil, .jsonError(e))
+                DispatchQueue.main.async { completion(nil, .jsonError(e)) }
             }
         }.resumeTask()
     }
