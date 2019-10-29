@@ -61,9 +61,10 @@ final class DecodableRequestTests: XCTestCase {
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         
         let expect = expectation(description: "Complete call")
-        _ = URLSession.shared.jsonTask(with: request, resultType: [Post].self, keypath: "users") { (post, error) in
+        _ = URLSession.shared.jsonTask(with: request, resultType: [Post].self, keypath: "users") { (result) in
             XCTAssert(Thread.isMainThread, "Not on main thread")
-            XCTAssertNotNil(post, String(describing: error))
+            let post = try? result.get()
+            XCTAssertNotNil(post, "We expected a post here")
             print(String(describing: post))
             
             expect.fulfill()
@@ -87,10 +88,11 @@ final class DecodableRequestTests: XCTestCase {
         request.httpBody = try! JSONEncoder().encode(post)
         
         let expect = expectation(description: "Complete call")
-        _ = URLSession.shared.jsonTask(with: request, resultType: Post.self) { (post, error) in
+        _ = URLSession.shared.jsonTask(with: request, resultType: Post.self) { (result) in
             XCTAssert(Thread.isMainThread, "Not on main thread")
-            XCTAssertNotNil(post, String(describing: error))
-            XCTAssertTrue(post!.userId == 89, String(describing: error))
+            let post = try? result.get()
+            XCTAssertNotNil(post, "We expected a post here")
+            XCTAssertTrue(post!.userId == 89, "We expected userId to be 89")
             print(String(describing: post))
             expect.fulfill()
         }
@@ -111,9 +113,17 @@ final class DecodableRequestTests: XCTestCase {
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         
         let expect = expectation(description: "Complete call")
-        _ = URLSession.shared.jsonTask(with: request, resultType: [Post].self, keypath: "uss") { (post, error) in
+        _ = URLSession.shared.jsonTask(with: request, resultType: [Post].self, keypath: "uss") { (result) in
             XCTAssert(Thread.isMainThread, "Not on main thread")
-            XCTAssertEqual(error, URLSessionApiError.keypathError("uss"))
+            
+            do {
+                _ = try result.get()
+                XCTFail()
+            } catch let e as URLSessionApiError {
+                XCTAssertEqual(e, URLSessionApiError.keypathError("uss"))
+            } catch let e {
+                XCTFail("Wrong type of error thrown \(e)")
+            }
             expect.fulfill()
         }
         
@@ -134,9 +144,18 @@ final class DecodableRequestTests: XCTestCase {
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         
         let expect = expectation(description: "Complete call")
-        _ = URLSession.shared.jsonTask(with: request, resultType: [Post].self, keypath: "uss") { (post, error) in
+        _ = URLSession.shared.jsonTask(with: request, resultType: [Post].self, keypath: "uss") { (result) in
             XCTAssert(Thread.isMainThread, "Not on main thread")
-            XCTAssertEqual(error, URLSessionApiError.statusCodeError(404, Array(200..<300)))
+            do {
+                _ = try result.get()
+                XCTFail()
+            } catch URLSessionApiError.statusCodeError(let status, let codes) {
+                XCTAssertEqual(status, 404)
+                XCTAssertEqual(codes, Array(200..<300))
+            } catch let e {
+                XCTFail("Wrong type of error thrown \(e)")
+            }
+            
             expect.fulfill()
         }
         
@@ -156,9 +175,10 @@ final class DecodableRequestTests: XCTestCase {
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         
         let expect = expectation(description: "Complete call")
-        _ = URLSession.shared.jsonTask(with: request, resultType: Name.self, keypath: "user.name") { (name, error) in
+        _ = URLSession.shared.jsonTask(with: request, resultType: Name.self, keypath: "user.name") { (result) in
             XCTAssert(Thread.isMainThread, "Not on main thread")
-            XCTAssertNotNil(name, String(describing: error))
+            let name = try? result.get()
+            XCTAssertNotNil(name, "Expected name to be not nil")
             print(String(describing: name))
             expect.fulfill()
         }
@@ -180,9 +200,17 @@ final class DecodableRequestTests: XCTestCase {
         
        let expect = expectation(description: "Complete call")
         
-        _ = URLSession.shared.jsonTask(with: request, resultType: Name.self, keypath: "user.name.ad") { (name, error) in
+        _ = URLSession.shared.jsonTask(with: request, resultType: Name.self, keypath: "user.name.ad") { (result) in
             XCTAssert(Thread.isMainThread, "Not on main thread")
-            XCTAssertEqual(error, URLSessionApiError.keypathError("user.name.ad"))
+            do {
+                _ = try result.get()
+                XCTFail()
+            } catch URLSessionApiError.keypathError(let keypath) {
+                XCTAssertEqual(keypath, "user.name.ad")
+            } catch let e {
+                XCTFail("Wrong type of error thrown \(e)")
+            }
+            
             expect.fulfill()
         }
         
@@ -209,9 +237,17 @@ final class DecodableRequestTests: XCTestCase {
         
         let expect = expectation(description: "Complete call")
         
-        _ = URLSession.shared.jsonTask(with: request, resultType: [Post].self) { (post, error) in
+        _ = URLSession.shared.jsonTask(with: request, resultType: [Post].self) { (result) in
             XCTAssert(Thread.isMainThread, "Not on main thread")
-            XCTAssertEqual(error, URLSessionApiError.jsonError(nil))
+            do {
+                _ = try result.get()
+                XCTFail()
+            } catch URLSessionApiError.jsonError(_) {
+                
+            } catch let e {
+                XCTFail("Wrong type of error thrown \(e)")
+            }
+            
             expect.fulfill()
         }
     

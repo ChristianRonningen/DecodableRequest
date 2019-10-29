@@ -1,6 +1,8 @@
 
 import Foundation
 
+public typealias URLSessionResult<T: Decodable> = Result<T, URLSessionApiError>
+
 public enum URLSessionApiError: LocalizedError {
     case decodingError
     case jsonError(Error?)
@@ -38,8 +40,8 @@ extension URLSessionApiError: Equatable {
             return true
         case (.keypathError(let a), .keypathError(let b)):
             return a == b
-        case (.statusCodeError(let scA, _), .statusCodeError(let scB, _)):
-            return scA == scB
+        case (.statusCodeError(let scA, let ascA), .statusCodeError(let scB, let ascB)):
+            return scA == scB && ascA == ascB
         default:
             return false
         }
@@ -47,30 +49,31 @@ extension URLSessionApiError: Equatable {
 }
 
 public extension URLSession {
-    func jsonTask<T>(url: URL, resultType: T.Type, keypath: String? = nil, completion: @escaping (T?, URLSessionApiError?) -> Void) -> URLSessionDataTask where T: Decodable {
+    func jsonTask<T>(url: URL, resultType: T.Type, keypath: String? = nil, completion: @escaping ((URLSessionResult<T>) -> Void)) -> URLSessionDataTask where T: Decodable {
         var request = URLRequest(url: url)
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         return jsonTask(with: request, resultType: resultType, keypath: keypath, completion: completion)
     }
     
-    func jsonTask<T>(with request: URLRequest, resultType: T.Type, acceptedStatusCodes: [Int]? = Array(200..<300), keypath: String? = nil, completion: @escaping (T?, URLSessionApiError?) -> Void) -> URLSessionDataTask where T: Decodable {
+    func jsonTask<T>(with request: URLRequest, resultType: T.Type, acceptedStatusCodes: [Int]? = Array(200..<300), keypath: String? = nil, completion: @escaping (URLSessionResult<T>) -> Void) -> URLSessionDataTask where T: Decodable {
         return dataTask(with: request) { (data, response, error) in
+            
             if let error = error {
-                DispatchQueue.main.async { completion(nil, .responsError(error)) }
+                DispatchQueue.main.async { completion(.failure(.responsError(error))) }
                 return
             }
 
             if let httpResponse = response as? HTTPURLResponse {
                 if let statusCodes = acceptedStatusCodes {
                     if !statusCodes.contains(httpResponse.statusCode) {
-                        DispatchQueue.main.async { completion(nil, .statusCodeError(httpResponse.statusCode, statusCodes)) }
+                        DispatchQueue.main.async { completion(.failure(.statusCodeError(httpResponse.statusCode, statusCodes))) }
                         return
                     }
                 }
             }
 
             guard let data = data else {
-                DispatchQueue.main.async { completion(nil, .dataError) }
+                DispatchQueue.main.async { completion(.failure(.dataError)) }
                 return
             }
             
@@ -78,7 +81,7 @@ public extension URLSession {
                 let decoder = JSONDecoder()
                 guard let keypath = keypath else {
                     let value = try decoder.decode(T.self, from: data)
-                    DispatchQueue.main.async { completion(value, nil) }
+                    DispatchQueue.main.async { completion(.success(value)) }
                     return
                 }
                 
@@ -92,16 +95,16 @@ public extension URLSession {
                     keypathJson = (keypathJson as? [AnyHashable: Any])?[key]
                 }
                 guard keypathJson != nil else {
-                    DispatchQueue.main.async { completion(nil, .keypathError(keypath)) }
+                    DispatchQueue.main.async { completion(.failure(.keypathError(keypath))) }
                     return
                 }
                 
                 let keypathData = try JSONSerialization.data(withJSONObject: keypathJson as Any, options: .fragmentsAllowed)
                 
                 let value = try decoder.decode(T.self, from: keypathData)
-                DispatchQueue.main.async { completion(value, nil) }
+                DispatchQueue.main.async { completion(.success(value)) }
             } catch let e {
-                DispatchQueue.main.async { completion(nil, .jsonError(e)) }
+                DispatchQueue.main.async { completion(.failure(.jsonError(e))) }
             }
         }.resumeTask()
     }
