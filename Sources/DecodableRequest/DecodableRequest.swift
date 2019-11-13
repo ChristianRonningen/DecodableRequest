@@ -49,14 +49,14 @@ extension URLSessionApiError: Equatable {
 }
 
 public extension URLSession {
-    func jsonTask<T>(url: URL, resultType: T.Type, keypath: String? = nil, completion: @escaping ((URLSessionResult<T>) -> Void)) -> URLSessionDataTask where T: Decodable {
+    func jsonTask<T>(url: URL, resultType: T.Type, keypath: String? = nil, resume: Bool = true, completion: @escaping ((URLSessionResult<T>) -> Void)) -> URLSessionDataTask where T: Decodable {
         var request = URLRequest(url: url)
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        return jsonTask(with: request, resultType: resultType, keypath: keypath, completion: completion)
+        return jsonTask(with: request, resultType: resultType, keypath: keypath, resume: resume, completion: completion)
     }
     
-    func jsonTask<T>(with request: URLRequest, resultType: T.Type, acceptedStatusCodes: [Int]? = Array(200..<300), keypath: String? = nil, completion: @escaping (URLSessionResult<T>) -> Void) -> URLSessionDataTask where T: Decodable {
-        return dataTask(with: request) { (data, response, error) in
+    func jsonTask<T>(with request: URLRequest, resultType: T.Type, acceptedStatusCodes: [Int]? = Array(200..<300), keypath: String? = nil, resume: Bool = true, completion: @escaping (URLSessionResult<T>) -> Void) -> URLSessionDataTask where T: Decodable {
+        let task = dataTask(with: request) { (data, response, error) in
             
             if let error = error {
                 DispatchQueue.main.async { completion(.failure(.responsError(error))) }
@@ -106,7 +106,13 @@ public extension URLSession {
             } catch let e {
                 DispatchQueue.main.async { completion(.failure(.jsonError(e))) }
             }
-        }.resumeTask()
+        }
+        
+        if resume {
+            return task.resumeTask()
+        } else {
+            return task
+        }
     }
 }
 
