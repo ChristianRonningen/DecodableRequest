@@ -2,3 +2,4 @@ os: osx
 language: swift
 xcode_workspace: ./.swiftpm/xcode/package.xcworkspace
 xcode_scheme: DecodableRequest
+xcode_destination: platform=macOS
