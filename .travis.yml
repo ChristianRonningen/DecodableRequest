@@ -3,4 +3,4 @@ language: swift
 xcode_workspace: ./.swiftpm/xcode/package.xcworkspace
 xcode_scheme: DecodableRequest
 xcode_destination: platform=macOS
-script: xcodebuild -workspace ./.swiftpm/xcode/package.xcworkspace -scheme DecodableRequest -destination platform\=macOS build test | xcpretty
+script: rake
