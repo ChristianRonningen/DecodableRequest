@@ -5,6 +5,7 @@ namespace :package_manager do
 
   desc 'Builds the project with the Swift Package Manager'
   task spm: :prepare do
+    sh("swift package resolve")
     run_test()
   end
 end
