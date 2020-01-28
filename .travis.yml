@@ -2,5 +2,8 @@ os: osx
 sudo: required
 language: swift
 script:
-    - swift package update
-    - swift test
+- swift package update
+- swift test
+env:
+  global:
+    secure: CkTN+QQDOpaNckkuo3YjWHZ9FJHeCK6hUMFE3iLfSpQugqz50e4scCcTdQJ2D9Rfe+1cyWhlSSMI8iF7pXWPYekwlPAZWmVm7dOuYBnrw4kfJC2/Ru0KTGkYLS9sIzjebrA0qgVgYNJ9Z6h7rqR/DbTTOuLqqeYMfFNzGzCwuJr2gOcYYt48y7+QpmHv4iFeuh6OZIZSwqX8H3ny0PHwqpVIMG2kc7B4YuwOnT7h047puX3pjqaFZusEdtzSasLEMnQ5AdFZqJ2SB5QWhMMyte+mZfzTXDAFvgHqjgTnwqioD3WRwgc8r0lMWMDytzLx8cqfs5FB9/3uzErxhYi9rH351Tuz9iLDXCIi5Ka55H9ubYpLCb0PIVR0ueuj5zjpqeCT5GZkiOaH3bA7IFM+sN1pzMETKJNheqNggYF49dV+zJdp/q1nxar5VFdSnEGP4sNA/0YeqtfWV8Wq8xIf/Yix2CvoARC8EpEYlCdwlQS9Us/6/TbDUFG5pjgDn7O84CB5Kh7WIcHq+0pdaVKeDiG/RsPGcAE/WlVJdXaV6j27rspArLicWRR9cQDiI00emzXu+Quyo7hL7bvmEMLzLzSnDWWmbPVlaYlRIGFGwqVPslEzSJeBcrdrkpBT9mKglmMMPiP5vqEqrjC/8FufTEImnEZELOeV022v6uuTe1c=
