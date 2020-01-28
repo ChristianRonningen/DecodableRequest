@@ -6,5 +6,3 @@ git_source(:github) {|repo_name| "https://github.com/ChristianRonningen/Decodabl
 
 gem 'rake'
 gem 'xcpretty'
-
-# gem "rails"
