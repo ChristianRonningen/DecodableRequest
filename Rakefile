@@ -19,12 +19,12 @@ task default: 'test'
 private
 
 def run_test()
-    sh("xcodebuild clean build test -workspace .swiftpm/xcode/package.xcworkspace -scheme DecodableRequest | xcpretty -c ; exit ${PIPESTATUS[0]}")
+    sh("swift test; exit ${PIPESTATUS[0]}") rescue nil
     test_failed("SPM") unless $?.success?
 end
 
 def test_failed(platform)
-  puts "#{platform} build failed"
+  puts "#{platform} test failed"
   exit $?.exitstatus
 end
 

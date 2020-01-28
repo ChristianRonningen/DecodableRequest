@@ -8,9 +8,9 @@
       <BuildActionEntries>
          <BuildActionEntry
             buildForTesting = "YES"
-            buildForRunning = "YES"
-            buildForProfiling = "YES"
-            buildForArchiving = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
@@ -74,9 +74,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "DecodableRequest"
-            BuildableName = "DecodableRequest"
-            BlueprintName = "DecodableRequest"
+            BlueprintIdentifier = "DecodableRequestTests"
+            BuildableName = "DecodableRequestTests"
+            BlueprintName = "DecodableRequestTests"
             ReferencedContainer = "container:">
          </BuildableReference>
       </MacroExpansion>
