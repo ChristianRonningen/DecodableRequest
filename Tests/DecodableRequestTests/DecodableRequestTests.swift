@@ -206,7 +206,7 @@ final class DecodableRequestTests: XCTestCase {
                 _ = try result.get()
                 XCTFail()
             } catch URLSessionApiError.keypathError(let keypath) {
-                XCTAssertEqual(keypath, "user.name.ad.")
+                XCTAssertEqual(keypath, "user.name.ad")
             } catch let e {
                 XCTFail("Wrong type of error thrown \(e)")
             }
