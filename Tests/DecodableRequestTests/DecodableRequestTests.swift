@@ -149,7 +149,7 @@ final class DecodableRequestTests: XCTestCase {
             do {
                 _ = try result.get()
                 XCTFail()
-            } catch URLSessionApiError.statusCodeError(let status, let codes) {
+            } catch URLSessionApiError.statusCodeError(let status, let codes, let data, let error) {
                 XCTAssertEqual(status, 404)
                 XCTAssertEqual(codes, Array(200..<300))
             } catch let e {

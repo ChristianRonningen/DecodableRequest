@@ -9,7 +9,7 @@ public enum URLSessionApiError: LocalizedError {
     case dataError
     case keypathError(String)
     case responsError(Error)
-    case statusCodeError(Int, [Int])
+    case statusCodeError(Int, [Int], Data?, Error?)
     
     public var errorDescription: String? {
         switch self {
@@ -23,7 +23,7 @@ public enum URLSessionApiError: LocalizedError {
             return "Keypath \(k) is missing or not valid"
         case .responsError(let e):
             return e.localizedDescription
-        case .statusCodeError(let sc, let asc):
+        case .statusCodeError(let sc, let asc, _, _):
             return "Statuscode of \(sc) didnt match accepted codes \(asc)"
         }
     }
@@ -40,7 +40,7 @@ extension URLSessionApiError: Equatable {
             return true
         case (.keypathError(let a), .keypathError(let b)):
             return a == b
-        case (.statusCodeError(let scA, let ascA), .statusCodeError(let scB, let ascB)):
+        case (.statusCodeError(let scA, let ascA, let dataA, let errorA), .statusCodeError(let scB, let ascB, let dataB, let errorB)):
             return scA == scB && ascA == ascB
         default:
             return false
@@ -66,7 +66,7 @@ public extension URLSession {
             if let httpResponse = response as? HTTPURLResponse {
                 if let statusCodes = acceptedStatusCodes {
                     if !statusCodes.contains(httpResponse.statusCode) {
-                        DispatchQueue.main.async { completion(.failure(.statusCodeError(httpResponse.statusCode, statusCodes))) }
+                        DispatchQueue.main.async { completion(.failure(.statusCodeError(httpResponse.statusCode, statusCodes, data, error))) }
                         return
                     }
                 }
